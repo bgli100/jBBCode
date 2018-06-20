@@ -27,10 +27,8 @@ class Parser
 
     const OPTION_STATE_DEFAULT = 0;
     const OPTION_STATE_TAGNAME = 1;
-    const OPTION_STATE_KEY = 2;
     const OPTION_STATE_VALUE = 3;
     const OPTION_STATE_QUOTED_VALUE = 4;
-    const OPTION_STATE_JAVASCRIPT = 5;
 
     /** @var DocumentElement The root element of the parse tree */
     protected $treeRoot;
@@ -220,7 +218,7 @@ class Parser
      */
     public function codeExists($tagName, $usesOption = false)
     {
-        return isset($this->bbcodes[strtolower($tagName)][$usesOption]);
+        return isset($this->bbcodes[$tagName][$usesOption]);
     }
 
     /**
@@ -234,7 +232,7 @@ class Parser
     public function getCode($tagName, $usesOption = false)
     {
         if($this->codeExists($tagName, $usesOption)) {
-            return $this->bbcodes[strtolower($tagName)][$usesOption];
+            return $this->bbcodes[$tagName][$usesOption];
         }
 
         return null;
@@ -375,7 +373,6 @@ class Parser
         $keys = array();
         $values = array();
         $options = array();
-
         $len = strlen($tagContent);
         $done = false;
         $idx = 0;
@@ -392,14 +389,6 @@ class Parser
                                 $keys[] = $tagName;
                                 $buffer = "";
                                 break;
-                            case ' ':
-                                if($buffer) {
-                                    $state = static::OPTION_STATE_DEFAULT;
-                                    $tagName = $buffer;
-                                    $buffer = '';
-                                    $keys[] = $tagName;
-                                }
-                                break;
                             case "\n":
                             case "\r":
                                 break;
@@ -414,78 +403,28 @@ class Parser
                         }
                         break;
 
-                    case static::OPTION_STATE_DEFAULT:
-                        switch($char){
-                            case ' ':
-                                // do nothing
-                            default:
-                                $state = static::OPTION_STATE_KEY;
-                                $buffer .= $char;
-                        }
-                        break;
-
                     case static::OPTION_STATE_VALUE:
                         switch($char){
                             case '"':
                                 $state = static::OPTION_STATE_QUOTED_VALUE;
                                 break;
                             case null: // intentional fall-through
-                            case ' ': // key=value<space> delimits to next key
-                                $values[] = trim($buffer);
-                                $buffer = "";
-                                $state = static::OPTION_STATE_KEY;
-                                break;
-                            case ":":
-                                if($buffer=="javascript"){
-                                    $state = static::OPTION_STATE_JAVASCRIPT;
-                                }
-                                $buffer .= $char;
-                                break;
                             default:
                                 $buffer .= $char;
 
                         }
                         break;
 
-                    case static::OPTION_STATE_JAVASCRIPT:
-                        switch($char){
-                            case ";":
-                                $buffer .= $char;
-                                $values[] = $buffer;
-                                $buffer = "";
-                                $state = static::OPTION_STATE_KEY;
-
-                                break;
-                            default:
-                                $buffer .= $char;
-                        }
-                        break;
-
-                    case static::OPTION_STATE_KEY:
-                        switch($char){
-                            case '=':
-                                $state = static::OPTION_STATE_VALUE;
-                                $keys[] = trim($buffer);
-                                $buffer = '';
-                                break;
-                            case ' ': // ignore <space>key=value
-                                break;
-                            default:
-                                $buffer .= $char;
-                                break;
-                        }
-                        break;
 
                     case static::OPTION_STATE_QUOTED_VALUE:
                         switch($char){
                             case null:
                             case '"':
-                                $state = static::OPTION_STATE_KEY;
-                                $values[] = $buffer;
+                                if($buffer != '') $values[] = $buffer;
                                 $buffer = '';
 
-                                // peek ahead. If the next character is not a space or a closing brace, we have a bad tag and need to abort
-                                if(isset($tagContent[$idx+1]) && $tagContent[$idx+1]!=" " && $tagContent[$idx+1]!="]" ){
+                                // peek ahead. If the next character is not a closing brace, we have a bad tag and need to abort
+                                if(isset($tagContent[$idx+1]) && $tagContent[$idx+1]!="]" ){
                                     throw new \DomainException("Badly formed attribute: $tagContent");
                                 }
                                 break;
@@ -495,10 +434,7 @@ class Parser
                         }
                         break;
                     default:
-                        if(!empty($char)){
-                            $state = static::OPTION_STATE_KEY;
-                        }
-
+                        throw new \DomainException("Badly formed attribute: $tagContent"); // should never reach here
                 }
                 if($idx >= $len){
                     $done = true;
@@ -510,7 +446,6 @@ class Parser
                 if(count($keys)==(count($values)+1)){
                     array_unshift($values, "");
                 }
-
                 $options = array_combine($keys, $values);
             }
         }
@@ -628,7 +563,7 @@ class Parser
             return $parent;
         }
         $curr = $tokenizer->next();
-        while ('[' != $prevPrev || '/'.$parent->getTagName() != strtolower($prev) ||
+        while ('[' != $prevPrev || '/'.$parent->getTagName() != $prev ||
             ']' != $curr) {
             $this->createTextNode($parent, $prevPrev);
             $prevPrev = $prev;
