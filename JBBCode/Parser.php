@@ -415,7 +415,6 @@ class Parser
                         }
                         break;
 
-
                     case static::OPTION_STATE_QUOTED_VALUE:
                         switch($char){
                             case null:
@@ -441,7 +440,7 @@ class Parser
                 }
                 $idx++;
             }
-
+            if($buffer != '') $values[] = $buffer;
             if(!empty($keys) && !empty($values)){
                 if(count($keys)==(count($values)+1)){
                     array_unshift($values, "");
@@ -576,5 +575,4 @@ class Parser
             $curr = $tokenizer->next();
         }
     }
-
 }
