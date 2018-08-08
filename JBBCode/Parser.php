@@ -218,7 +218,7 @@ class Parser
      */
     public function codeExists($tagName, $usesOption = false)
     {
-        return isset($this->bbcodes[$tagName][$usesOption]);
+        return isset($this->bbcodes[strtolower($tagName)][$usesOption]);
     }
 
     /**
@@ -232,7 +232,7 @@ class Parser
     public function getCode($tagName, $usesOption = false)
     {
         if($this->codeExists($tagName, $usesOption)) {
-            return $this->bbcodes[$tagName][$usesOption];
+            return $this->bbcodes[strtolower($tagName)][$usesOption];
         }
 
         return null;
@@ -562,7 +562,7 @@ class Parser
             return $parent;
         }
         $curr = $tokenizer->next();
-        while ('[' != $prevPrev || '/'.$parent->getTagName() != $prev ||
+        while ('[' != $prevPrev || '/'.$parent->getTagName() != strtolower($prev) ||
             ']' != $curr) {
             $this->createTextNode($parent, $prevPrev);
             $prevPrev = $prev;
