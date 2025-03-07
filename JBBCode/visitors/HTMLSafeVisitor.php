@@ -37,7 +37,7 @@ class HTMLSafeVisitor implements \JBBCode\NodeVisitor
 		}
 	}
 
-	protected function htmlSafe($str, $options = null)
+	protected function htmlSafe($str, mixed $options = null)
 	{
 		if (is_null($options))
 		{

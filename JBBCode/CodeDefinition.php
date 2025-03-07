@@ -40,7 +40,7 @@ class CodeDefinition
      */
     public static function construct($tagName, $replacementText, $useOption = false,
             $parseContent = true, $nestLimit = -1, $optionValidator = array(),
-            $bodyValidator = null)
+            InputValidator|null $bodyValidator = null)
     {
         $def = new CodeDefinition();
         $def->elCounter = 0;

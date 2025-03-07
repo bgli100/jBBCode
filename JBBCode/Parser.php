@@ -59,7 +59,7 @@ class Parser
      * @return Parser
      */
     public function addBBCode($tagName, $replace, $useOption = false, $parseContent = true, $nestLimit = -1,
-                              InputValidator $optionValidator = null, InputValidator $bodyValidator = null)
+                              InputValidator|null $optionValidator = null, InputValidator|null $bodyValidator = null)
     {
         $builder = new CodeDefinitionBuilder($tagName, $replace);
 
